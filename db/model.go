@@ -1,6 +1,8 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -35,12 +37,22 @@ func ReadIDProduct(p *Product, id string) (err error) {
 	return nil
 }
 func UpdateProduct(p *Product, id string) (err error) {
-	Database.Save(p)
-	return nil
+  Database.Where("id = ?", id).First(p)
+  before := *p
+	Database.Where("id = ?", id).Updates(p)
+  Database.Where("id = ?", id).First(p)
+  after := *p
+	if before == after{
+    return errors.New("no change")
+  }
+  return nil
 }
 func DeleteProduct(p *Product, id string) (err error) {
 	Database.Where("id = ?", id).Delete(p)
-	return nil
+  if err := Database.Where("id = ?", id).First(p).Error; err != nil {
+    return nil
+	}
+  return errors.New("no change")
 }
 
 

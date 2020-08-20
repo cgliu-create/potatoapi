@@ -7,42 +7,96 @@ import (
   "net/http"
 )
 
-func createFunc(w http.ResponseWriter, r *http.Request) {
+func createProduct(w http.ResponseWriter, r *http.Request) {
 	var p Product
   json.NewDecoder(r.Body).Decode(&p)
-	CreateProduct(&p)
+  err := CreateProduct(&p)
+  if err == nil{
+    w.WriteHeader(201)
+  } else {
+    w.WriteHeader(500)
+  }
+  w.Header().Set("Content-Type", "application/json")
   json.NewEncoder(w).Encode(&p)
 }
-func readAllFunc(w http.ResponseWriter, r *http.Request) {
+func readAllProduct(w http.ResponseWriter, r *http.Request) {
 	var p []Product
-	ReadAllProduct(&p)
+  err := ReadAllProduct(&p)
+  if err == nil{
+    w.WriteHeader(200)
+  } else {
+    w.WriteHeader(500)
+  }
+  w.Header().Set("Content-Type", "application/json")
   json.NewEncoder(w).Encode(&p)
 }
-func readOneFunc(w http.ResponseWriter, r *http.Request) {
+func readOneProduct(w http.ResponseWriter, r *http.Request) {
   params := mux.Vars(r)
 	var p Product
-  ReadIDProduct(&p, params["id"])
+  err := ReadIDProduct(&p, params["id"])
+  if err == nil{
+    w.WriteHeader(200)
+  } else {
+    w.WriteHeader(500)
+  }
+  w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(&p)
 }
-func updateFunc(w http.ResponseWriter, r *http.Request) {
+func updateProduct(w http.ResponseWriter, r *http.Request) {
   params := mux.Vars(r)
 	var p Product
-  ReadIDProduct(&p, params["id"])
+  err := ReadIDProduct(&p, params["id"])
+  if err != nil{
+    w.WriteHeader(404)
+  }
   json.NewDecoder(r.Body).Decode(&p)
-  UpdateProduct(&p, params["id"])
-  json.NewEncoder(w).Encode(&p)
+  err = UpdateProduct(&p, params["id"])
+  w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+  if err == nil{
+    w.WriteHeader(200)
+	  json.NewEncoder(w).Encode(&p)
+  } else {
+    w.WriteHeader(304)
+    w.Write([]byte("no change"))
+  }
 }
-func deleteFunc(w http.ResponseWriter, r *http.Request) {
+func deleteProduct(w http.ResponseWriter, r *http.Request) {
   params := mux.Vars(r)
 	var p Product
-  DeleteProduct(&p, params["id"])
+  err := DeleteProduct(&p, params["id"])
+  w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+  if err == nil{
+    w.WriteHeader(200)
+	  json.NewEncoder(w).Encode(&p)
+  } else {
+    w.WriteHeader(304)
+    w.Write([]byte("no change"))
+  }
+}
+
+func productFunc(w http.ResponseWriter, r *http.Request){
+  if r.Method == "GET" {
+    readOneProduct(w, r)
+  }
+  if r.Method == "PUT"{
+    updateProduct(w, r)
+  }
+  if r.Method == "DELETE"{
+    deleteProduct(w, r)
+  }
+}
+
+func productsFunc(w http.ResponseWriter, r *http.Request){
+  if r.Method == "GET"{
+    readAllProduct(w, r)
+  }
+  if r.Method == "POST" {
+    createProduct(w, r)
+  }
 }
 
 func AddAPIRoutes(r *mux.Router){
   apirouter := r.PathPrefix("/api").Subrouter()
-  apirouter.HandleFunc("/create", middleware.Process(createFunc)).Methods("POST")
-  apirouter.HandleFunc("/readall", middleware.Process(readAllFunc)).Methods("GET")
-  apirouter.HandleFunc("/read/{id}", middleware.Process(readOneFunc)).Methods("GET")
-  apirouter.HandleFunc("/update/{id}", middleware.Process(updateFunc)).Methods("PUT")
-  apirouter.HandleFunc("/delete/{id}", middleware.Process(deleteFunc)).Methods("DELETE")
+  apirouter.HandleFunc("/products/{id}", middleware.Process(productFunc)).Methods("GET", "PUT", "DELETE")
+  apirouter.HandleFunc("/products", middleware.Process(productsFunc)).Methods("GET", "POST")
 }
