@@ -12,52 +12,62 @@ func createProduct(w http.ResponseWriter, r *http.Request) {
   json.NewDecoder(r.Body).Decode(&p)
   err := CreateProduct(&p)
   if err == nil{
+    w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(201)
+    json.NewEncoder(w).Encode(&p)
   } else {
+    w.Header().Set("Content-Type", "text/plain; charset=utf-8")
     w.WriteHeader(500)
+    w.Write([]byte("Product not created"))
   }
-  w.Header().Set("Content-Type", "application/json")
-  json.NewEncoder(w).Encode(&p)
 }
 func readAllProduct(w http.ResponseWriter, r *http.Request) {
 	var p []Product
   err := ReadAllProduct(&p)
   if err == nil{
+    w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(200)
+    json.NewEncoder(w).Encode(&p)
   } else {
-    w.WriteHeader(500)
+    w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+    w.WriteHeader(404)
+    w.Write([]byte("Product not found"))
   }
-  w.Header().Set("Content-Type", "application/json")
-  json.NewEncoder(w).Encode(&p)
 }
 func readOneProduct(w http.ResponseWriter, r *http.Request) {
   params := mux.Vars(r)
 	var p Product
   err := ReadIDProduct(&p, params["id"])
   if err == nil{
+    w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(200)
+	  json.NewEncoder(w).Encode(&p)
   } else {
-    w.WriteHeader(500)
+    w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+    w.WriteHeader(404)
+    w.Write([]byte("Product not found"))
   }
-  w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(&p)
 }
 func updateProduct(w http.ResponseWriter, r *http.Request) {
   params := mux.Vars(r)
 	var p Product
   err := ReadIDProduct(&p, params["id"])
   if err != nil{
+    w.Header().Set("Content-Type", "text/plain; charset=utf-8")
     w.WriteHeader(404)
-  }
-  json.NewDecoder(r.Body).Decode(&p)
-  err = UpdateProduct(&p, params["id"])
-  w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-  if err == nil{
-    w.WriteHeader(200)
-	  json.NewEncoder(w).Encode(&p)
+    w.Write([]byte("Product not found"))
   } else {
-    w.WriteHeader(304)
-    w.Write([]byte("no change"))
+    json.NewDecoder(r.Body).Decode(&p)
+    err = UpdateProduct(&p, params["id"])
+    if err == nil{
+      w.Header().Set("Content-Type", "application/json")
+      w.WriteHeader(200)
+	    json.NewEncoder(w).Encode(&p)
+    } else {
+      w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+      w.WriteHeader(304)
+      w.Write([]byte("Product not changed"))
+    }
   }
 }
 func deleteProduct(w http.ResponseWriter, r *http.Request) {
@@ -67,10 +77,10 @@ func deleteProduct(w http.ResponseWriter, r *http.Request) {
   w.Header().Set("Content-Type", "text/plain; charset=utf-8")
   if err == nil{
     w.WriteHeader(200)
-	  json.NewEncoder(w).Encode(&p)
+    w.Write([]byte("Product removed"))
   } else {
-    w.WriteHeader(304)
-    w.Write([]byte("no change"))
+    w.WriteHeader(404)
+    w.Write([]byte("Product not found"))
   }
 }
 

@@ -37,22 +37,20 @@ func ReadIDProduct(p *Product, id string) (err error) {
 	return nil
 }
 func UpdateProduct(p *Product, id string) (err error) {
-  Database.Where("id = ?", id).First(p)
-  before := *p
-	Database.Where("id = ?", id).Updates(p)
-  Database.Where("id = ?", id).First(p)
-  after := *p
-	if before == after{
+  b := &Product{}
+  Database.Where("id = ?", id).First(b)
+	if b.Name == p.Name && b.Price == p.Price{
     return errors.New("no change")
   }
+  Database.Where("id = ?", id).Save(p)
   return nil
 }
 func DeleteProduct(p *Product, id string) (err error) {
-	Database.Where("id = ?", id).Delete(p)
   if err := Database.Where("id = ?", id).First(p).Error; err != nil {
-    return nil
-	}
-  return errors.New("no change")
+    return err
+  }
+	Database.Where("id = ?", id).Delete(p)
+  return nil
 }
 
 
