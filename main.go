@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"github.com/cgliu-create/potatoapi/middleware"
 	"github.com/cgliu-create/potatoapi/server"
 	"github.com/cgliu-create/potatoapi/db"
 	"github.com/gorilla/mux"
@@ -35,6 +36,13 @@ func main() {
   db.AddAPIRoutes(router)
 	srv := server.New(router, serviceAddress)
 	log.Println("server starting")
+
+  token, err := middleware.GenerateJWT()
+  if err != nil {
+    log.Println("jwt error")
+  }
+  log.Println(token)
+
 	err = srv.ListenAndServeTLS(certFile, keyFile)
 	if err != nil {
 		log.Fatalf("server failed to start: %v", err)
